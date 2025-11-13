@@ -1,160 +1,352 @@
-# Tree Menu Demo — Django Showcase
+# Django Tree Menu
 
-An end-to-end demonstration of a hierarchical navigation system, implemented as a reusable Django app. The project highlights how to build, store, render, and manage tree menus entirely with native Django components while keeping database access efficient—one query per menu.
+A production-ready Django application for hierarchical navigation with efficient database queries,
+flexible rendering modes with demo pages.
 
----
+### Live Website
 
-## Feature Highlights
+Interact with the tree menu in a live environment on the deployed demo site.
 
-- **Template tag rendering** — Drop-in `{% draw_menu "main_menu" %}` tag prepares a fully hydrated tree without leaking ORM calls into templates.
-- **URL-aware activation** — Current page is detected from the request path (exact match or longest prefix), so the active branch is expanded and highlighted automatically.
-- **Flexible linking** — Supports both named URLs (`reverse`) and raw URLs, with fallback logic to keep links valid.
-- **Multiple menus per page** — Any number of independent menus can be rendered on the same template; each triggers exactly one query thanks to prefetching strategy.
-- **Admin-first content workflow** — All menus and items are stored in the database and editable via Django Admin with inline editing.
-- **Demo-ready data** — A data migration seeds three menus (main, sidebar, footer) covering nested and flat navigation patterns.
-- **Composable views** — A suite of `TemplateView` subclasses powers a multi-page “portal” that demonstrates menu behaviour in various contexts.
+Switch between flat and dropdown navigation modes
 
----
+Observe automatic active-branch expansion
 
-## Architecture Overview
+Click through sample pages powered by this backend
+http://13.53.73.97:8009
+
+Here is the admin panel link for that website:
+- http://13.53.73.97:8009/admin
+- email: admin@admin.com
+- password: 12
+
+## Watch Video Overview
+
+For a quick walkthrough of the project features and behavior, watch the video overview:
+
+▶️ Watch the Django Tree Menu overview on YouTube: https://youtu.be/K4NHN2cgDC0
+
+## Overview
+
+This project implements a reusable tree menu system that addresses common navigation requirements in
+Django applications:
+
+- Single database query per menu render
+- Automatic active branch detection and expansion
+- Support for both flat and dropdown menu layouts
+- Named URL resolution with fallback handling
+
+## Key Features
+
+### Core Functionality
+
+- **Template tag rendering** — `{% draw_menu 'menu_name' %}` generates complete menu trees
+- **URL-aware activation** — Automatic detection of active pages via request path matching
+- **Dual URL support** — Named URLs (Django's `reverse()`) with explicit URL fallback
+- **Multiple menu instances** — Render independent menus on the same page
+- **Configurable display modes** — Flat lists or dropdown wrappers per menu
+
+### Admin Interface
+
+- **URL selection dropdowns** — Auto-populated list of available named URLs
+- **Inline editing** — Manage menu items directly from menu edit pages
+
+### Performance
+
+- **Optimized queries** — One query per menu using `select_related()` and `prefetch_related()`
+- **Tree building** — In-memory tree construction from flat queryset
+- **Minimal template logic** — Active state calculation happens in Python
+
+## Technical Architecture
 
 ```
-core/
-  settings.py          # project configuration (PostgreSQL, template dirs, apps)
-  urls.py              # routes admin + tree_menu demo pages
-apps/
-  tree_menu/           # reusable tree menu app
-    models/
-      menu.py          # Menu (container)
-      menu_item.py     # MenuItem with hierarchy + URL resolution logic
-    templatetags/
-      tree_menu_tags.py# draw_menu inclusion tag and tree-building helpers
-    templates/tree_menu/
-      menu.html        # top-level UL wrapper
-      menu_node.html   # recursive LI renderer with active state handling
-    views.py           # DemoPageView + concrete pages (home, catalog, etc.)
-    urls.py            # Named routes for demo pages
-    migrations/
-      0001_initial.py  # schema definition
-      0002_create_demo_menus.py  # demo content seeding
-templates/
-  base.html            # shared layout with header/sidebar/footer menus
-  demo/page.html       # content placeholder for individual demo pages
+apps/tree_menu/
+├── models/
+│   ├── menu.py              # Menu container with display settings
+│   └── menu_item.py         # Hierarchical menu items
+├── templatetags/
+│   └── tree_menu_tags.py    # Template tag and tree builder
+├── templates/tree_menu/
+│   ├── menu.html            # Root template with mode selection
+│   └── menu_node.html       # Recursive node renderer
+├── admin.py                 # admin classes
+├── utils.py                 # utility functions
+└── views.py                 # Demo views
 ```
 
 ### Data Model
 
-- `Menu`
-  - `name` – unique system identifier, used in the template tag.
-  - `verbose_name` – friendly label for admins.
-- `MenuItem`
-  - `menu` – foreign key to `Menu`.
-  - `parent` – self-referential foreign key (nullable) enabling arbitrary depth.
-  - `title`, `named_url`, `url`, `order`.
-  - `get_url()` prefers `named_url` via `reverse`; falls back to explicit URL or `#`.
+**Menu**
 
-### Rendering Pipeline
+- `name` (CharField, unique) — Template tag identifier
+- `verbose_name` (CharField) — Admin display name
+- `render_as_dropdown` (BooleanField) — Display mode flag
+- `dropdown_title` (CharField) — Parent element text for dropdown mode
 
-1. `draw_menu` inclusion tag fetches all items for a given menu name (one query).
-2. `build_menu_tree` transforms the flat queryset into `Node` objects with `children`, `is_active`, and `is_ancestor` flags.
-3. Active node detection:
-   - Exact match with the current request path.
-   - Fallback to the longest prefix (e.g. `/catalog/` for `/catalog/item/`).
-4. Recursive template (`menu_node.html`) renders nested `<ul>` and `<li>` elements, expanding only the active branch and its ancestors.
+**MenuItem**
 
----
+- `menu` (ForeignKey) — Parent menu
+- `parent` (ForeignKey, self-referential) — Hierarchy support
+- `title` (CharField) — Display text
+- `named_url` (CharField) — Django URL name
+- `url` (CharField) — Explicit URL fallback
+- `order` (PositiveIntegerField) — Sort order
 
-## Project Structure Deep Dive
+### Rendering Logic
 
-- `apps/tree_menu/views.py` — Contains `DemoPageView` and six derived views representing different sections (home, catalog, pricing, integrations, about, contact). Each view injects structured content (title, lead paragraph, sections) into the shared template.
-- `templates/base.html` — Establishes the UI shell with CSS styling and renders three separate menus to illustrate independent invocations of `draw_menu`.
-- `apps/tree_menu/migrations/0002_create_demo_menus.py` — Populates demo menus with nested items and named URL references. Running `python manage.py migrate` drops you into a fully functional showcase.
-- `core/urls.py` — Wires project root to `apps.tree_menu.urls`, exposing the demo pages at `/`, `/catalog/`, `/catalog/pricing/`, etc.
+1. Template tag fetches all items for menu (single query)
+2. Tree builder constructs node hierarchy with active state flags
+3. Active detection uses exact match or longest prefix match
+4. Template recursively renders nodes, expanding active branches
 
----
+## Installation
 
-## Getting Started
-
-### Requirements
+### Prerequisites
 
 - Python 3.11+
-- PostgreSQL (or compatible Postgres service)
-- `pip`, `virtualenv` (recommended)
+- PostgreSQL 12+
+- Docker & Docker Compose (for containerized deployment)
 
-### Environment Variables
-
-Configure database credentials via `.env` (loaded by `python-decouple`):
-
-```
-DB_NAME=template_task
-DB_USER=postgres
-DB_PASSWORD=postgres
-DB_HOST=127.0.0.1
-DB_PORT=5432
-```
-
-### Installation
+### Quick Start with Docker
 
 ```bash
+# Clone repository
+git clone https://github.com/bahodir0902/TreeMenuBackend.git
+cd TreeMenuBackend
+
+# Start services
+docker compose up --build
+
+# Access application
+# Web: http://localhost:8000
+# Admin: http://localhost:8000/admin
+```
+
+Default admin credentials are created via `entrypoint.sh`.
+
+### Local Development Setup
+
+```bash
+# Create virtual environment
 python -m venv venv
-source venv/bin/activate        # Windows: venv\Scripts\activate
+source venv/bin/activate  # Windows: venv\Scripts\activate
+
+# Install dependencies (pip)
 pip install -r requirements.txt
-python manage.py migrate        # applies schema + demo menu migration
+
+# Or with Poetry
+poetry install
+poetry shell
+
+# Configure environment
+cp .env.example .env
+# Edit .env with your database credentials
+
+# Run migrations
+python manage.py migrate
+
+# Create superuser
 python manage.py createsuperuser
+
+# Start development server
 python manage.py runserver
 ```
 
-Visit `http://127.0.0.1:8000/` to explore the demo UI. The Django admin is available at `/admin/`.
+### Environment Configuration
 
----
+Required variables in `.env`:
 
-## Demo Tour
+```env
+DB_NAME=db_name
+DB_USER=db_user
+DB_PASSWORD=db_password
+DB_HOST=localhost
+DB_PORT=db_port (or host.docker.internal) if deploying
+SECRET_KEY=your-secret-key
+DEBUG=True
+```
 
-- **Header menu (`main_menu`)** — Highlights top-level navigation and nested catalog branch. Observe automatic expansion when visiting `/catalog/`, `/catalog/pricing/`, etc.
-- **Sidebar menu (`sidebar_menu`)** — Demonstrates calling the tag multiple times on a single page and mixing named URLs with anchor links.
-- **Footer links (`footer_menu`)** — Shows a shallow menu that still benefits from activation logic (e.g. “Support” active on the contact page).
+### Pre-commit Hooks
 
-The content pages themselves use purely declarative data from `DEMO_PAGES`, proving that the menu logic is entirely decoupled from view code.
+```bash
+# Install pre-commit
+pip install pre-commit
 
----
+# Install git hooks
+pre-commit install
 
-## Working in the Admin
+# Run manually
+pre-commit run --all-files
+```
 
-1. Log into `/admin/` with the superuser credentials you created.
-2. Add or edit `Menu` records (inline editing of `MenuItem` is enabled).
-3. Rearrange items by adjusting the `order` field; set hierarchical relationships via the `parent` dropdown.
-4. Use either `named_url` (preferred for internal links) or explicit `url`. If `named_url` cannot be reversed, the system automatically falls back to the provided URL.
+## Usage
 
-All changes are reflected immediately in the rendered menus thanks to the template tag abstraction.
+### Template Integration
 
----
+```django
+{% load tree_menu_tags %}
 
-## Extending the Project
+<!DOCTYPE html>
+<html>
+<body>
+    <header>
+        <!-- Flat navigation menu -->
+        {% draw_menu 'main_menu' %}
+    </header>
 
-- **Custom menu placement** — Include `{% load tree_menu_tags %}` in any template and call `{% draw_menu "your_menu_name" %}` wherever needed.
-- **Alternate activation rules** — Extend `build_menu_tree` to support custom logic (e.g. regex matching, query parameters).
-- **Caching** — Wrap the template tag output in Django’s template fragment cache if your menu data is large and seldom changes.
-- **Styling** — Replace `base.html` with your design system; the markup structure is lightweight and predictable.
+    <aside>
+        <!-- Sidebar menu -->
+        {% draw_menu 'sidebar_menu' %}
+    </aside>
 
----
+    <nav>
+        <!-- Dropdown footer menu -->
+        {% draw_menu 'footer_menu' %}
+    </nav>
+</body>
+</html>
+```
 
-## Testing & Quality
+### Admin Configuration
 
-While the project focuses on demonstrative code, the components are structured for easy test coverage:
+#### Creating a Menu
 
-- Unit tests can target `build_menu_tree` to validate active node detection and expansion rules.
-- Template tests (via `django.test.Client`) can assert rendered HTML for various URL scenarios.
+1. Navigate to Admin → Menus → Add Menu
+2. Set system name (e.g., `main_menu`)
+3. Choose display mode:
+    - Flat: Items render as siblings
+    - Dropdown: Items wrap in parent element
+4. Add menu items with hierarchy
 
-Linting passes with the default Django checks; integrate your preferred tools (e.g. `flake8`, `black`) as needed.
+#### URL Configuration
 
----
+Menu items support two URL types with automatic fallback:
 
-## Summary
+- **Named URL** (recommended): Select from dropdown of available URLs
+- **Explicit URL**: Manual path entry (e.g., `/contact/`)
 
-This repository delivers a polished reference implementation for tree-based navigation in Django:
+Named URLs are resolved at render time. If resolution fails, explicit URL is used.
 
-- Clean separation between data, rendering, and presentation.
-- Zero third-party dependencies beyond Django and the standard library.
-- Ready-made demo pages and content to illustrate every feature point.
+### Menu Display Modes
 
-Clone, run, explore, and adapt it to your own projects. Happy coding!
+**Flat Mode** (default)
+
+```
+[Главная] [Каталог...] [О проекте] [Контакты]
+```
+
+Use for: Main navigation, footer links, breadcrumbs
+
+**Dropdown Mode**
+
+```
+[Профиль ▼]
+  └─ Аккаунт
+  └─ Настройки
+  └─ Выйти
+```
+
+Use for: User menus, language selectors, admin actions
+
+## Development
+
+### Project Structure
+
+```
+.
+├── apps/
+│   └── tree_menu/          # Main application
+├── core/                   # Django settings
+├── templates/              # Global templates
+├── static/                 # Static assets
+├──
+├── Dockerfile              # Docker image configuration
+├── docker-compose.yml      # Multi-container configuration
+└── entrypoint.sh
+├── .github/
+│   └── workflows/          # CI/CD pipelines
+├── pyproject.toml          # Poetry configuration
+├── requirements.txt        # Pip dependencies (old)
+└── .pre-commit-config.yaml # Pre-commit hooks
+```
+
+### Code Quality
+
+The project uses:
+
+- **Black** — Code formatting
+- **isort** — Import sorting
+- **flake8** — Linting
+- **mypy** — Type checking (optional)
+
+Configuration is defined in `pyproject.toml` and `.pre-commit-config.yaml`.
+
+### Database Migrations
+
+```bash
+# Create migrations
+python manage.py makemigrations
+
+# Apply migrations
+python manage.py migrate
+
+# Show migration plan
+python manage.py showmigrations
+```
+
+## Deployment
+
+### Docker Production Build
+
+```bash
+# Run with compose
+docker compose up --build -d
+```
+
+### Static Files
+
+```bash
+# Collect static files
+python manage.py collectstatic --no-input
+
+# Configure web server to serve /static/ and /media/
+```
+
+### Environment Variables for Production
+
+## Performance Considerations
+
+### Query Optimization
+
+Each `draw_menu` call executes exactly one query:
+
+```python
+items = MenuItem.objects.filter(menu__name=menu_name)
+    .select_related('parent', 'menu')
+    .order_by('order', 'id')
+```
+
+Tree construction happens in Python, not database.
+
+### Scaling
+
+- Menu items are prefetched in single query
+- No N+1 query problems
+- Tree building is O(n) where n = item count
+- Template rendering is O(n) with early termination for collapsed branches
+
+## Contributing
+
+1. Fork repository
+2. Create feature branch (`git checkout -b feature/improvement`)
+3. Commit changes (`git commit -m 'Add feature'`)
+4. Push to branch (`git push origin feature/improvement`)
+5. Open Pull Request
+
+## License
+
+This project is provided as-is for demonstration and educational purposes.
+That is, you can use this project as you wish.
+
+## Requirements
+
+See `requirements.txt` or `pyproject.toml` for complete dependency list.
