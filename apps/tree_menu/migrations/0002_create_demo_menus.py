@@ -24,7 +24,6 @@ def create_menu(apps, schema_editor, name, verbose_name, items):
             },
         )
         if not created:
-            # Обновляем базовые поля, чтобы избежать ручного редактирования
             menu_item.parent = parent
             menu_item.named_url = item.get("named_url", "")
             menu_item.url = item.get("url", "")

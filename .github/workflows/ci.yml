@@ -4,7 +4,7 @@ on:
   # including merges to dev
   push:
     branches:
-      - dev
+      - main
 
   # open/update/close a PR against dev
 #  pull_request:
@@ -51,6 +51,7 @@ jobs:
       DB_HOST: localhost
       DB_PORT: 5432
 
+      ALLOWED_HOSTS: '*'
       FRONTEND_URL: "http://localhost:8080"
       DOMAIN_URL: "https://example.com"
 

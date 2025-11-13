@@ -256,4 +256,4 @@ cython_debug/
 .idea/
 .vscode/
 .firebase.json
-static/
+staticfiles/
