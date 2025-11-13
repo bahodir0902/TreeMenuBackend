@@ -1,5 +1,5 @@
 from django.db import models
-from django.urls import reverse, NoReverseMatch
+from django.urls import NoReverseMatch, reverse
 
 from .menu import Menu
 
@@ -7,12 +7,12 @@ from .menu import Menu
 class MenuItem(models.Model):
     menu = models.ForeignKey(
         Menu,
-        related_name='items',
+        related_name="items",
         on_delete=models.CASCADE,
     )
     parent = models.ForeignKey(
-        'self',
-        related_name='children',
+        "self",
+        related_name="children",
         on_delete=models.CASCADE,
         blank=True,
         null=True,
@@ -35,7 +35,7 @@ class MenuItem(models.Model):
     order = models.PositiveIntegerField(default=0)
 
     class Meta:
-        ordering = ('menu', 'parent__id', 'order', 'id')
+        ordering = ("menu", "parent__id", "order", "id")
         verbose_name = "Пункт меню"
         verbose_name_plural = "Пункты меню"
 
@@ -49,5 +49,5 @@ class MenuItem(models.Model):
             except NoReverseMatch:
                 if self.url:
                     return self.url
-                return '#'
-        return self.url or '#'
+                return "#"
+        return self.url or "#"

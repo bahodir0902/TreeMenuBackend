@@ -16,7 +16,8 @@ class Menu(models.Model):
         max_length=255,
         blank=True,
         verbose_name="Заголовок dropdown",
-        help_text="Текст для родительского элемента (например, 'Profile', 'Account'). Используется только если 'Отрисовать как dropdown' включено",
+        help_text="Текст для родительского элемента (например, 'Profile', 'Account')."
+        " Используется только если 'Отрисовать как dropdown' включено",
     )
 
     verbose_name = models.CharField(
@@ -31,4 +32,3 @@ class Menu(models.Model):
 
     def __str__(self):
         return self.verbose_name or self.name
-
