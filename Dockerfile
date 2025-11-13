@@ -1,23 +1,24 @@
 FROM python:3.11.5-slim-bullseye
 
-ENV PIP_DISABLE_PIP_VERSION_CHECK 1
-ENV PYTHONDONTWRITEBYTECODE 1
-ENV PYTHONUNBUFFERED 1
+ENV PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1
 
-WORKDIR /code
+WORKDIR /app
 
-RUN apt update && apt install -y curl
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc libpq-dev \
+    && rm -rf /var/lib/apt/lists/*
 
-RUN apt-get update && apt-get install -y gdal-bin libgdal-dev
+RUN pip install --no-cache-dir poetry
 
-RUN pip install poetry
+COPY pyproject.toml poetry.lock* ./
 
-COPY poetry.lock pyproject.toml /app/
+RUN poetry config virtualenvs.create false \
+    && poetry install --no-root --no-interaction --no-ansi
 
-RUN poetry config virtualenvs.create false
-RUN poetry install --no-root
+COPY . .
 
-COPY . /app
+RUN chmod +x /app/entrypoint.sh
 
-COPY entrypoint.sh /app/entrypoint.sh
-RUN chmod +x /code/entrypoint.sh
+ENTRYPOINT ["/app/entrypoint.sh"]

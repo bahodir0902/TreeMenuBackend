@@ -3,7 +3,6 @@ name: TreeMenuBackend
 services:
   web:
     build: .
-    container_name: TreeMenuBackend
     entrypoint: /app/entrypoint.sh
     ports:
       - "8010:8010"
