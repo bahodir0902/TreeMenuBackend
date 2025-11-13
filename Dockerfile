@@ -19,6 +19,8 @@ RUN poetry config virtualenvs.create false \
 
 COPY . .
 
+EXPOSE 8010
+
 RUN chmod +x /app/entrypoint.sh
 
 ENTRYPOINT ["/app/entrypoint.sh"]
