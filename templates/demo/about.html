@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block title %}О проекте — Tree Menu Demo{% endblock %}
+
+{% block content %}
+    <article>
+        <header>
+            <h1>О проекте</h1>
+            <p>Описание проекта и ключевых принципов реализации меню.</p>
+        </header>
+
+        <section>
+            <h2>Технологии</h2>
+            <p>Приложение написано на Django и использует только стандартную библиотеку Python.</p>
+        </section>
+
+        <section>
+            <h2>Архитектура</h2>
+            <p>Меню хранится в БД, редактируется через админку и отрисовывается шаблонным тегом.</p>
+        </section>
+    </article>
+
+{% endblock %}

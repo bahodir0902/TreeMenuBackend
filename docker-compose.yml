@@ -1,0 +1,17 @@
+name: TreeMenuBackend
+
+services:
+  web:
+    build: .
+    container_name: TreeMenuBackend
+    entrypoint: /app/entrypoint.sh
+    ports:
+      - "8010:8010"
+    volumes:
+      - .:/app
+      - ./static:/app/static
+    env_file:
+      - .env
+    restart: unless-stopped
+    extra_hosts:
+      - "host.docker.internal:host-gateway"

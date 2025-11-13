@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% block title %}Главная — Tree Menu Demo{% endblock %}
+
+{% block content %}
+<article>
+    <header>
+        <h1>Демо страница</h1>
+        <p>Стартовая страница проекта с древовидным меню</p>
+    </header>
+
+    <section>
+        <h2>Что демонстрируем</h2>
+        <p>Пример показывает, как древовидное меню реагирует на активную страницу: все ветки к активному пункту раскрыты, дочерние элементы первого уровня видны.</p>
+    </section>
+
+    <section>
+        <h2>Как работает меню</h2>
+        <p>Шаблонный тег <code>{% templatetag openvariable %} draw_menu 'main_menu' {% templatetag closevariable %}</code> подготавливает структуру дерева одним запросом к БД и автоматически подсвечивает текущую страницу.</p>
+    </section>
+</article>
+{% endblock %}

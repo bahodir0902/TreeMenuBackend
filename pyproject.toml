@@ -1,0 +1,21 @@
+[tool.poetry]
+name = "templatetaskbackend"
+version = "0.1.0"
+description = ""
+authors = ["bahodir <vbahodir00@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.13"
+asgiref = "3.10.0"
+django = "5.2.8"
+gunicorn = "^23.0.0"
+psycopg2-binary = "2.9.11"
+python-decouple = "3.8"
+sqlparse = "0.5.3"
+tzdata = "2025.2"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

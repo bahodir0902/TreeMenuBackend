@@ -1,0 +1,18 @@
+{% if render_as_dropdown %}
+    <ul class="tree-menu tree-menu-{{ menu_name }} tree-menu-dropdown">
+        <li class="dropdown-wrapper {% if active_node %}active{% endif %}">
+            <a href="#" class="dropdown-toggle">{{ dropdown_title|default:"Menu" }}</a>
+            <ul class="dropdown-content">
+                {% for node in roots %}
+                    {% include "tree_menu/menu_node.html" with node=node active_node=active_node %}
+                {% endfor %}
+            </ul>
+        </li>
+    </ul>
+{% else %}
+    <ul class="tree-menu tree-menu-{{ menu_name }}">
+        {% for node in roots %}
+            {% include "tree_menu/menu_node.html" with node=node active_node=active_node %}
+        {% endfor %}
+    </ul>
+{% endif %}
